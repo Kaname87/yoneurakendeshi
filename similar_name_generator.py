@@ -9,6 +9,13 @@ TARGET_WORD_COLUMN_IDX = 0
 SIMILAR_WORD_COLUMN_IDX = 1
 SIMILARITY_COLUMN_IDX = 2
 
+def append_target_word(target_word, similar_word_list):
+    TARGET_WORD_RATE = os.environ.get('TARGET_WORD_RATE')
+    if float(TARGET_WORD_RATE) > 0:
+        correct_word_num = int(len(similar_word_list) * float(TARGET_WORD_RATE))
+        similar_word_list += [[target_word, target_word, 1.0] for x in range(correct_word_num)]
+    return similar_word_list
+
 def create_similar_word_list_all():
     similar_word_list_all = []
     similar_word_list = []
@@ -26,12 +33,8 @@ def create_similar_word_list_all():
         
             if prev_target_word != '' and prev_target_word != current_target_word:
                 
-                # 解答が正解と違いすぎるとつまらないので、正解の文字も入れておく
-                TARGET_WORD_RATE = os.environ.get('TARGET_WORD_RATE')
-                if float(TARGET_WORD_RATE) > 0:
-                    correct_word_num = int(len(similar_word_list) * float(TARGET_WORD_RATE))
-                    similar_word_list += [[prev_target_word, prev_target_word, 1.0] for x in range(correct_word_num)]
-
+                # 解答が正解と違いすぎるとつまらないので、正解の文字も一定数入れておく
+                similar_word_list = append_target_word(prev_target_word, similar_word_list)
                 similar_word_list_all.append(similar_word_list)
                 similar_word_list = []
 
@@ -48,6 +51,7 @@ def create_similar_word_list_all():
             prev_target_word = current_target_word
         
         # 最後の文字リスト用
+        similar_word_list = append_target_word(prev_target_word, similar_word_list)
         similar_word_list_all.append(similar_word_list)
     return similar_word_list_all
 
@@ -94,7 +98,8 @@ def format_word_similarity(selected_words):
 def format_all_result(selected_words):
     name = join_words(selected_words)
     name_similarity = format_similarity(calc_avg_similarity(selected_words))
-    
+    # print(name_similarity, name)
+
     format_name_similarity = f'平均類似度: {name_similarity}'
     similarity_detail = format_word_similarity(selected_words)
     return f'{name}\n{similarity_detail}\n{format_name_similarity}'
@@ -105,5 +110,6 @@ def generate_formatted_random_name():
     return format_all_result(selected_words)
 
 if __name__ == "__main__":
-    text = generate_formatted_random_name()
-    print(text)
+    for i in range(1):
+        text = generate_formatted_random_name()
+        print(text)
